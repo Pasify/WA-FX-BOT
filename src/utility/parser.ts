@@ -1,3 +1,9 @@
+type ParsedRequest = {
+  amount: number;
+  from: string;
+  to: string;
+} | null;
+
 import currencies from "../currencies.ts";
 function findCurrencyCode(word: string) {
   for (let currency of currencies) {
@@ -8,7 +14,7 @@ function findCurrencyCode(word: string) {
   return null;
 }
 
-export function parseConversionRequest(message: string) {
+export function parseConversionRequest(message: string): ParsedRequest {
   let cleanedUpMessage = message.toLowerCase().trim();
   if (cleanedUpMessage.split(" ").length < 4) return null;
   let [amountString, fromCurrency, , toCurrency] = cleanedUpMessage.split(" ");
@@ -25,8 +31,15 @@ export function parseConversionRequest(message: string) {
   ) {
     return null;
   }
+
+  const from = wordToCurrencyMap.from;
+  const to = wordToCurrencyMap.to;
   console.log(wordToCurrencyMap);
-  return wordToCurrencyMap;
+  return {
+    amount: wordToCurrencyMap.amount,
+    from,
+    to,
+  };
 }
 
 // parseConversionRequest("100 USD to EUR");

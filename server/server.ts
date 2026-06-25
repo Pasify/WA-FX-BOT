@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 
 import sendMessage from "../src/utility/sendMessage.ts";
+import getExchangeRate from "../src/utility/getExchangeRate.ts";
+import formatCurrency from "../src/utility/formatCurrency.ts";
 import { parseConversionRequest } from "../src/utility/parser.ts";
 
 dotenv.config();
@@ -34,7 +36,9 @@ app.post("/server/server", async (req, res) => {
   try {
     if (messageObject?.text?.body) {
       const from = messageObject.from;
-      const messageText = messageObject.text.body || "100 USD to EUR";
+      // const messageText = messageObject.text.body || "100 USD to EUR";
+      // const messageText = "100 USD to NGN";
+      const messageText = "100 USD to XYZ";
       console.log(`Received message from ${from}: ${messageText}`);
 
       const parsedRequest = parseConversionRequest(messageText);
@@ -45,8 +49,24 @@ app.post("/server/server", async (req, res) => {
         return;
       }
 
+      let exchange = await getExchangeRate(
+        parsedRequest.amount,
+        parsedRequest.from,
+        parsedRequest.to,
+      );
+      if (exchange === null) {
+        await sendMessage(
+          `Sorry, I couldn't fetch the exchange rate, please try again later`,
+        );
+        return;
+      }
       let response = await sendMessage(
-        `converting ${parsedRequest.amount} ${parsedRequest.from} to ${parsedRequest.to}`,
+        `
+        converting ${parsedRequest.amount} ${parsedRequest.from} to ${parsedRequest.to}
+
+        ${parsedRequest.amount} ${parsedRequest.from} = ${formatCurrency(exchange.convertedAmount, parsedRequest.to)} ${parsedRequest.to} (rate: ${exchange.rate})
+
+        `,
       );
 
       console.log(
